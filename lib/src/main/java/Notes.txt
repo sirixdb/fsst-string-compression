@@ -1,0 +1,2 @@
+https://github.com/cwida/fsst/tree/master 
+Sanity folder - minimal code to covert from. More at the original repo
