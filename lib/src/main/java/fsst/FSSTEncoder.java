@@ -12,30 +12,12 @@ public class FSSTEncoder {
     Counters counters;
     int[] simdBuffer = new int[3 << 19];
 
-    /** */
+/** */
     FSSTEncoder() {
     }
-    
-/*
-Questions
-TODO
 
-Is it necessary to start with char arrays/ and input lengths instead of array of strings- FSSTEncoder
-
-
-/** */
-//string size, stirng length,
-   
-       size_t n,               /* IN: number of strings in batch to sample from. */
-       size_t lenIn[],         /* IN: byte-lengths of the inputs */
-       unsigned char *strIn[], /* IN: string start pointers. */
-       int zeroTerminated      /* IN: whether input strings are zero-terminated. If so, encoded strings are as well (i.e. symbol[0]=""). */
-    */
-   /** Calibrate a FSST symbol table from a batch of strings (it is best to provide at least 16KB of data).
-     * 
-     * @param n number of strings in batch to sample from
-     * 
-    */
+// TODO: Ask about string arrays instead of this char arrays.
+   /** Calibrate a FSST symbol table from a batch of strings (it is best to provide at least 16KB of data). */
     FSSTEncoder(int n, int[] inputLength, char[] inputString, int zeroTerminated) {
         int[] sampleBuffer = new int[(int) Symbol.FSST_SAMPLEMAXSZ];
         int[] sampleLen = inputLength;
