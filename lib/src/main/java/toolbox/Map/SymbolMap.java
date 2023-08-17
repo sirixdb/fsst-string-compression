@@ -13,7 +13,7 @@ public class SymbolMap {
     }
 
     void add(long symbol, char c) {
-        char len = ToolboxUtils.getSymolLength(symbol);
+        char len = ToolboxUtils.getSymbolLength(symbol);
         if (len > 1) {
             Entry entry = new Entry(symbol, c, len);
             entries.add(entry);
