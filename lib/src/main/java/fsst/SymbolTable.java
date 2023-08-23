@@ -329,12 +329,71 @@ public class SymbolTable {
             }
         }
         assert (symbolTable.terminator != 256);
-        Random rand = new Random();
+        Random rand = new Random(); //todo: check random seed
         int rand128 = rand.nextInt(129);
         int compressCountRet = this.compressCount(this, counters, line, len, sampleFrac);
-        // TODO: Implement this method
+        // TODO: Implement this method @javacatknight
         // SymbolTable table = this.makeTable(SymbolTable st, Counters counters);
         // https://github.com/cwida/fsst/blob/42850e13ba220dbba5fd721a4c54f969e2a45ac5/libfsst.cpp#L160
         return best;
+    }
+
+    // TODO: @javacatknight interference, replace auto
+    void makeTable(SymbolTable symbolTable, Counters counters, int sampleFrac) {
+        //Hashmap (needed because we can generate duplicate candidates)
+        //Not using HashSet due to lack of find() method, see: https://stackoverflow.com/questions/7283338/getting-an-element-from-a-set
+        HashMap <QSymbol, boolean> candidates;
+
+    //TODO: @javacatknight Google shift optimization over division. Caveats: auto done by compiler, dealing with negative
+    }
+
+    // add candidate symbols based on counted frequency
+      for (u32 pos1=0; pos1<FSST_CODE_BASE+(size_t) st->nSymbols; pos1++) { 
+         u32 cnt1 = counters.count1GetNext(pos1); // may advance pos1!!
+         if (!cnt1) continue;
+
+         // heuristic: promoting single-byte symbols (*8) helps reduce exception rates and increases [de]compression speed
+         Symbol s1 = st->symbols[pos1];
+         addOrInc(cands, s1, ((s1.length()==1)?8LL:1LL)*cnt1); //third one should be
+         //Long.parseUnsignedLong
+
+         if (sampleFrac >= 128 || // last round we do not create new (combined) symbols
+             s1.length() == Symbol::maxLength || // symbol cannot be extended
+             s1.val.str[0] == st->terminator) { // multi-byte symbols cannot contain the terminator byte
+            continue;
+         }
+         for (u32 pos2=0; pos2<FSST_CODE_BASE+(size_t)st->nSymbols; pos2++) { 
+            u32 cnt2 = counters.count2GetNext(pos1, pos2); // may advance pos2!!
+            if (!cnt2) continue;
+
+            // create a new symbol
+            Symbol s2 = st->symbols[pos2];
+            Symbol s3 = concat(s1, s2);
+            if (s2.val.str[0] != st->terminator) // multi-byte symbols cannot contain the terminator byte
+               addOrInc(cands, s3, cnt2);
+         }
+      }
+
+    /**
+     * Helper function.
+     * 
+     * @param count unsigned 64byte must be parsed to long
+     */
+
+    // TODO: @javacatknight auto type inference
+    void addOrInc(HashMap <QSymbol> candidates, Symbol s, Long count, int sampleFrac){
+        if (count < (5*sampleFrac)/128) return; // Improves both compression speed (less candidates), but also quality!!
+        
+        QSymbol q;
+        q.symbol = s;
+        q.gain = count * s.length();
+         
+        // Iterator  //look for the symbol. If not found, just insert.
+         var it = candidates.get(q);
+         if (it != candidates.end()) { // if found, add gain first and then insert
+            q.gain += (*it).gain;
+            candidates.erase(*it);
+         }
+         candidates.insert(q);
     }
 }

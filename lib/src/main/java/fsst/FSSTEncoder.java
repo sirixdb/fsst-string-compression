@@ -4,18 +4,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class FSSTEncoder {
-    static final long FSST_ENDIAN_MARKER = (long) 1;
-    static final long FSST_VERSION_20190218 = 20190218;
-    static final long FSST_VERSION = ((long) FSST_VERSION_20190218);
+    static final long FSST_ENDIAN_MARKER = 1L;
+    static final long FSST_VERSION_20190218 = 20190218L;
+    // static final long FSST_VERSION;
 
     SymbolTable symbolTable;
     Counters counters;
     int[] simdBuffer = new int[3 << 19];
 
+/** */
     FSSTEncoder() {
     }
-/** Calibrate a FSST symboltable from a batch of strings (it is best to provide at least 16KB of data). */
 
+// TODO: Ask about string arrays instead of this char arrays.
+   /** Calibrate a FSST symbol table from a batch of strings (it is best to provide at least 16KB of data). */
     FSSTEncoder(int n, int[] inputLength, char[] inputString, int zeroTerminated) {
         int[] sampleBuffer = new int[(int) Symbol.FSST_SAMPLEMAXSZ];
         int[] sampleLen = inputLength;
