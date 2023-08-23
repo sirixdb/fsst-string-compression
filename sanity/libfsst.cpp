@@ -170,8 +170,8 @@ SymbolTable *buildSymbolTable(Counters& counters, vector<u8*> line, size_t len[]
          QSymbol q;
          q.symbol = s;
          q.gain = count * s.length();
-         auto it = cands.find(q);
-         if (it != cands.end()) {
+         auto it = cands.find(q); //look for the symbol. If not found, just insert.
+         if (it != cands.end()) { // if found, add gain first and then insert
             q.gain += (*it).gain;
             cands.erase(*it);
          }
