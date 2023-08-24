@@ -127,4 +127,136 @@ public class FSSTEncoder {
         return 0;
     }
 
+    // Inline methods in C++ can be made private in Java if they're only used within
+    // the class
+    private long _compressAuto(long nlines, long[] lenIn, byte[][] strIn, long size, byte[] output,
+            long[] lenOut, byte[][] strOut, int simd) {
+        boolean avoidBranch = false, noSuffixOpt = false;
+
+        if (100 * this.symbolTable.lenHisto[1] > 65 * this.symbolTable.nSymbols
+                && 100 * this.symbolTable.suffixLim > 95 * this.symbolTable.lenHisto[1]) {
+            noSuffixOpt = true;
+        } else if ((this.symbolTable.lenHisto[0] > 24 && this.symbolTable.lenHisto[0] < 92) &&
+                (this.symbolTable.lenHisto[0] < 43 || this.symbolTable.lenHisto[6] + this.symbolTable.lenHisto[7] < 29)
+                &&
+                (this.symbolTable.lenHisto[0] < 72 || this.symbolTable.lenHisto[2] < 72)) {
+            avoidBranch = true;
+        }
+
+        return _compressImpl(nlines, lenIn, strIn, size, output, lenOut, strOut, noSuffixOpt, avoidBranch, simd);
+    }
+
+    private long _compressImpl(long nlines, long[] lenIn, byte[][] strIn, long size, byte[] output, long[] lenOut,
+            byte[][] strOut, boolean noSuffixOpt, boolean avoidBranch, int simd) {
+        return compressBulk(this.symbolTable, nlines, lenIn, strIn, size, output, lenOut, strOut, noSuffixOpt,
+                avoidBranch);
+
+    }
+
+    public long compressBulk(SymbolTable symbolTable2, long nlines, long[] lenIn, byte[][] strIn, long size,
+            byte[] output, long[] lenOut, byte[][] strOut, boolean noSuffixOpt, boolean avoidBranch) {
+        return 0;
+    }
+
+    public long fsst_compress(
+            int nlines,
+            long[] lenIn,
+            byte[][] strIn,
+            long size,
+            byte[] output,
+            long[] lenOut,
+            byte[][] strOut) {
+
+        long totLen = 0;
+        for (int i = 0; i < nlines; i++) {
+            totLen += lenIn[i];
+        }
+
+        boolean simd = totLen > nlines * 12 && (nlines > 64 || totLen > (long) 1 << 15);
+        return this._compressAuto(nlines, lenIn, strIn, size, output, lenOut, strOut, 3 * (simd ? 1 : 0));
+    }
+
+    public static int compressBulk(SymbolTable symbolTable, int nlines, int[] lenIn, byte[][] strIn, int size,
+            byte[] out, int[] lenOut, byte[][] strOut, boolean noSuffixOpt, boolean avoidBranch) {
+        byte[] cur = null;
+        byte[] end = null;
+        byte[] lim = new byte[out.length + size];
+
+        int curLine;
+        byte[] buf = new byte[512 + 8];
+
+        int outPointer = 0;
+
+        for (curLine = 0; curLine < nlines; curLine++) {
+            int chunk, curOff = 0;
+            strOut[curLine] = out;
+
+            do {
+                cur = Arrays.copyOfRange(strIn[curLine], curOff, strIn[curLine].length);
+                chunk = lenIn[curLine] - curOff;
+
+                if (chunk > 511) {
+                    chunk = 511;
+                }
+
+                if (2 * chunk + 7 > lim.length - outPointer) {
+                    return curLine;
+                }
+
+                System.arraycopy(cur, 0, buf, 0, chunk);
+                buf[chunk] = (byte) symbolTable.terminator;
+                end = Arrays.copyOfRange(buf, 0, chunk);
+
+                // Java doesn't have lambdas like C++ does (not in the same way), so we'll call
+                // a function instead.
+                if (noSuffixOpt) {
+                    outPointer = compressVariant(cur, end, out, outPointer, symbolTable, true, false);
+                } else if (avoidBranch) {
+                    outPointer = compressVariant(cur, end, out, outPointer, symbolTable, false, true);
+                } else {
+                    outPointer = compressVariant(cur, end, out, outPointer, symbolTable, false, false);
+                }
+
+            } while ((curOff += chunk) < lenIn[curLine]);
+            lenOut[curLine] = outPointer;
+        }
+
+        return curLine;
+    }
+
+    private static int compressVariant(byte[] cur, byte[] end, byte[] out, int outPointer, SymbolTable symbolTable,
+            boolean noSuffixOpt, boolean avoidBranch) {
+        byte byteLim = (byte) (symbolTable.nSymbols + (symbolTable.zeroTerminated ? 1 : 0) - symbolTable.lenHisto[0]);
+        while (cur.length < end.length) {
+            long word = Utils.fsst_unaligned_load(cur, 0);
+            int code = symbolTable.shortCodes[(int) (word & 0xFFFF)];
+            if (noSuffixOpt && (byte) code < symbolTable.suffixLim) {
+                out[outPointer++] = (byte) code;
+                cur = Arrays.copyOfRange(cur, 2, cur.length);
+            } else {
+                int pos = (int) (word & 0xFFFFFF);
+                int idx = (int) (Symbol.FSST_HASH(pos) & (symbolTable.hashTabSize - 1));
+                Symbol s = symbolTable.hashTab[idx];
+                out[outPointer + 1] = (byte) word;
+                word &= (0xFFFFFFFFFFFFFFFFL >> (byte) s.icl);
+                if (s.icl < QSymbol.FSST_ICL_FREE && s.value == word) {
+                    out[outPointer++] = (byte) s.code();
+                    cur = Arrays.copyOfRange(cur, s.length(), cur.length);
+                } else if (avoidBranch) {
+                    out[outPointer] = (byte) code;
+                    outPointer += 1 + ((code & Symbol.FSST_CODE_BASE) >> 8);
+                    cur = Arrays.copyOfRange(cur, code >> Symbol.FSST_LEN_BITS, cur.length);
+                } else if ((byte) code < byteLim) {
+                    out[outPointer++] = (byte) code;
+                    cur = Arrays.copyOfRange(cur, 2, cur.length);
+                } else {
+                    out[outPointer] = (byte) code;
+                    outPointer += 1 + ((code & Symbol.FSST_CODE_BASE) >> 8);
+                    cur = Arrays.copyOfRange(cur, 1, cur.length);
+                }
+            }
+        }
+        return outPointer;
+    }
+
 }

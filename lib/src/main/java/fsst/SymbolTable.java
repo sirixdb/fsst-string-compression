@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.Random;
 
 public class SymbolTable {
-    static final int hashTabSize = 1 << Symbol.FSST_HASH_LOG2SIZE;
+    final int hashTabSize = 1 << Symbol.FSST_HASH_LOG2SIZE;
     int[] shortCodes = new int[65536];
     int[] byteCodes = new int[256];
     Symbol[] symbols = new Symbol[Symbol.FSST_CODE_MAX];
