@@ -30,14 +30,16 @@ public class FSSTEncoder {
                 samples.add(inputString[i]);
             }
         } else {
-            int rand = Symbol.FSST_HASH(4637947).intValueExact();
+            // TODO Check that the long conversions are safe and correct and that the cast
+            // to int is safe
+            long rand = Symbol.FSST_HASH(4637947);
             int sampleLimit = (int) (sampleBuffer.length + Symbol.FSST_SAMPLETARGET);
             int[] sampleLen = new int[(int) (lineCount + Symbol.FSST_SAMPLEMAXSZ / Symbol.FSST_SAMPLELINE)];
             lengthArray = sampleLen;
             while (sampleBuffer.length < sampleLimit) {
                 // choose a non-empty line
-                rand = Symbol.FSST_HASH(rand).intValueExact();
-                int linenr = rand % lineCount;
+                rand = Symbol.FSST_HASH(rand);
+                int linenr = (int) (rand % lineCount);
                 while (lengthArray[linenr] == 0) {
                     if (++linenr == lineCount) {
                         linenr = 0;
@@ -46,7 +48,7 @@ public class FSSTEncoder {
 
                 // choose a chunk
                 int chunks = (int) (1 + ((lengthArray[linenr] - 1) / Symbol.FSST_SAMPLELINE));
-                rand = Symbol.FSST_HASH(rand).intValueExact();
+                rand = Symbol.FSST_HASH(rand);
                 int chunk = (int) (Symbol.FSST_SAMPLELINE * (rand % chunks));
 
                 // add the chunk to the sample
