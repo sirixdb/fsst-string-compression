@@ -16,7 +16,7 @@ class LibraryTest {
 
     @Test
     public void twoIntSymbolConstructor() {
-        Symbol symbol = new Symbol(50, 50);
+        Symbol symbol = new Symbol((byte) 50, 50);
         assertTrue(symbol.icl == 271712312, "symbol icl should be 271712312");
         assertTrue(symbol.value == 50, "symbol value should be 50");
     }
