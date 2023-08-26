@@ -23,9 +23,9 @@ public class SymbolTable {
         this.terminator = 0;
         this.zeroTerminated = false;
         for (int i = 0; i < 256; i++) {
-            symbols[i] = new Symbol(i, i | (1 << Symbol.FSST_LEN_BITS)); // pseudo symbols
+            symbols[i] = new Symbol((byte) i, (i | (1 << Symbol.FSST_LEN_BITS))); // pseudo symbols
         }
-        Symbol unused = new Symbol((int) 0, Symbol.FSST_CODE_MASK); // single-char symbol, exception code
+        Symbol unused = new Symbol((byte) 0, Symbol.FSST_CODE_MASK); // single-char symbol, exception code
         for (int i = 256; i < Symbol.FSST_CODE_MAX; i++) {
             symbols[i] = unused; // we start with all symbols unused
         }
@@ -116,7 +116,7 @@ public class SymbolTable {
         return byteCodes[s.first()] & Symbol.FSST_CODE_MASK;
     }
 
-    int findLongestSymbol(int cur, int end) {
+    int findLongestSymbol(byte cur, byte end) {
         Symbol symbol = new Symbol(cur, end);
         return findLongestSymbol(symbol); // represent the string as a temporary symbol
     }
@@ -239,7 +239,7 @@ public class SymbolTable {
             }
             if (cur < end) {
                 int start = cur;
-                int code2 = 255, code1 = symbolTable.findLongestSymbol(cur, end);
+                int code2 = 255, code1 = symbolTable.findLongestSymbol((byte) cur, (byte) end);
                 cur += symbolTable.symbols[code1].length();
                 gain += (int) (symbolTable.symbols[code1].length() - (1 + Utils.boolToInt(isEscapeCode(code1))));
                 while (true) {
@@ -287,7 +287,7 @@ public class SymbolTable {
                             cur += 1;
                         }
                     } else {
-                        code2 = symbolTable.findLongestSymbol(cur, end);
+                        code2 = symbolTable.findLongestSymbol((byte) cur, (byte) end);
                         cur += symbolTable.symbols[code2].length();
                     }
 
