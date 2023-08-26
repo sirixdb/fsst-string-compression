@@ -32,7 +32,7 @@ public class Symbol {
     }
 
     Symbol(int c, int code) {
-        // NOTE: This needs to be checked
+        // TODO: This needs to be checked
         this.icl = (1 << 28) | (code << 16) | 56;
         this.value = c;
     }
