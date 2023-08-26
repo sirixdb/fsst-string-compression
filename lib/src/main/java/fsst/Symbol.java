@@ -31,7 +31,7 @@ public class Symbol {
 
     }
 
-    Symbol(int c, int code) {
+    Symbol(byte c, int code) {
         // TODO: This needs to be checked
         this.icl = (1 << 28) | (code << 16) | 56;
         this.value = c;

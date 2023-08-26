@@ -31,7 +31,7 @@ public class SymbolMap {
         zeroTerminated = false;
 
         // stuff done once at startup
-        Symbol unused = new Symbol(0, Symbol.FSST_CODE_MASK); // single-char symbol, exception code
+        Symbol unused = new Symbol((byte) 0, Symbol.FSST_CODE_MASK); // single-char symbol, exception code
 
         for (int i = 0; i < 256; i++) {
             // NOTE: The Java byte type is signed, and casting an integer to a byte in the
