@@ -12,16 +12,18 @@ public class Symbol {
      * first 256 codes [0,255] are pseudo codes: escaped bytes
      */
     static final short FSST_CODE_BASE = (short) (long) 256;
-    private static final String prime = new String("2971215073");
-    static final BigInteger FSST_HASH_PRIME = new BigInteger(prime);
+    static final long FSST_HASH_PRIME = 2971215073L;
     static final short FSST_SHIFT = 15;
     static final long FSST_SAMPLETARGET = (long) (1 << 14);
     static final long FSST_SAMPLEMAXSZ = ((long) 2 * FSST_SAMPLETARGET);
     static final long FSST_SAMPLELINE = 512;
 
-    int maxLength = 0;
+    static final int maxLength = 8;
     long value = 0;
     long icl;
+    int gcl;
+    int gain;
+    byte[] symbol = new byte[maxLength];
 
     Symbol() {
         this.icl = 0;
@@ -29,8 +31,8 @@ public class Symbol {
 
     }
 
-    Symbol(int c, int code) {
-        // NOTE: This needs to be checked
+    Symbol(byte c, int code) {
+        // TODO: This needs to be checked
         this.icl = (1 << 28) | (code << 16) | 56;
         this.value = c;
     }
@@ -73,12 +75,11 @@ public class Symbol {
         return (int) (0xFFFF & this.value);
     }
 
-    static BigInteger FSST_HASH(long w) {
-        BigInteger conv = new BigInteger(String.valueOf(w));
-        return (((conv).multiply(FSST_HASH_PRIME)).xor((((conv).multiply(FSST_HASH_PRIME)).shiftRight(FSST_SHIFT))));
+    static long FSST_HASH(long w) {
+        return ((w * FSST_HASH_PRIME) ^ ((w * FSST_HASH_PRIME) >>> 13));
     }
 
-    public BigInteger hash() {
+    public long hash() {
         long v = 0xFFFFFF & this.value;
         return FSST_HASH(v);
     }

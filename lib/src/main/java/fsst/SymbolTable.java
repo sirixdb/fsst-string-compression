@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.Random;
 
 public class SymbolTable {
-    static final int hashTabSize = 1 << Symbol.FSST_HASH_LOG2SIZE;
+    final int hashTabSize = 1 << Symbol.FSST_HASH_LOG2SIZE;
     int[] shortCodes = new int[65536];
     int[] byteCodes = new int[256];
     Symbol[] symbols = new Symbol[Symbol.FSST_CODE_MAX];
@@ -23,9 +23,9 @@ public class SymbolTable {
         this.terminator = 0;
         this.zeroTerminated = false;
         for (int i = 0; i < 256; i++) {
-            symbols[i] = new Symbol(i, i | (1 << Symbol.FSST_LEN_BITS)); // pseudo symbols
+            symbols[i] = new Symbol((byte) i, (i | (1 << Symbol.FSST_LEN_BITS))); // pseudo symbols
         }
-        Symbol unused = new Symbol((int) 0, Symbol.FSST_CODE_MASK); // single-char symbol, exception code
+        Symbol unused = new Symbol((byte) 0, Symbol.FSST_CODE_MASK); // single-char symbol, exception code
         for (int i = 256; i < Symbol.FSST_CODE_MAX; i++) {
             symbols[i] = unused; // we start with all symbols unused
         }
@@ -56,17 +56,21 @@ public class SymbolTable {
                 int val = symbols[i].first2();
                 shortCodes[val] = (1 << Symbol.FSST_LEN_BITS) | (val & 255);
             } else {
-                BigInteger tableSize = new BigInteger(String.valueOf(hashTabSize - 1));
-                BigInteger idx = symbols[i].hash().and(tableSize);
-                hashTab[idx.intValue()].value = 0;
-                hashTab[idx.intValue()].icl = QSymbol.FSST_ICL_FREE; // marks empty in hashtab
+                int tableSize = hashTabSize - 1;
+                // TODO Check that the long conversions are safe and correct and that the int
+                // cast is safe
+                int idx = (int) (symbols[i].hash() & (tableSize));
+                hashTab[idx].value = 0;
+                hashTab[idx].icl = QSymbol.FSST_ICL_FREE; // marks empty in hashtab
             }
         }
         nSymbols = 0; // no need to clean symbols[] as no symbols are used
     }
 
     boolean hashInsert(Symbol s) {
-        int idx = s.hash().intValue() & (hashTabSize - 1);
+        // TODO Check that the long conversions are safe and correct and that the int
+        // cast is safe
+        int idx = (int) (s.hash() & (hashTabSize - 1));
         boolean taken = (hashTab[idx].icl < QSymbol.FSST_ICL_FREE);
         if (taken)
             return false; // collision in hash table
@@ -96,7 +100,9 @@ public class SymbolTable {
 
     /// Find longest expansion, return code (= position in symbol table)
     int findLongestSymbol(Symbol s) {
-        int idx = s.hash().intValue() & (hashTabSize - 1);
+        // TODO Check that the long conversions are safe and correct and that the int
+        // cast is safe
+        int idx = (int) (s.hash() & (hashTabSize - 1));
         BigInteger offset = new BigInteger("0xFFFFFFFFFFFFFFFF");
         if (hashTab[idx].icl <= s.icl
                 && hashTab[idx].value == (s.value & (offset.intValue() >> ((int) hashTab[idx].icl)))) {
@@ -110,7 +116,7 @@ public class SymbolTable {
         return byteCodes[s.first()] & Symbol.FSST_CODE_MASK;
     }
 
-    int findLongestSymbol(int cur, int end) {
+    int findLongestSymbol(byte cur, byte end) {
         Symbol symbol = new Symbol(cur, end);
         return findLongestSymbol(symbol); // represent the string as a temporary symbol
     }
@@ -233,7 +239,7 @@ public class SymbolTable {
             }
             if (cur < end) {
                 int start = cur;
-                int code2 = 255, code1 = symbolTable.findLongestSymbol(cur, end);
+                int code2 = 255, code1 = symbolTable.findLongestSymbol((byte) cur, (byte) end);
                 cur += symbolTable.symbols[code1].length();
                 gain += (int) (symbolTable.symbols[code1].length() - (1 + Utils.boolToInt(isEscapeCode(code1))));
                 while (true) {
@@ -257,7 +263,9 @@ public class SymbolTable {
                         // how to replicate that or if we even need to
                         double word = cur;
                         int code = (int) word & 0xFFFFFF;
-                        int idx = Symbol.FSST_HASH(code).intValueExact() & (hashTabSize - 1);
+                        // TODO Check that the long conversions are safe and correct and that the int
+                        // cast is safe
+                        int idx = (int) (Symbol.FSST_HASH(code) & (hashTabSize - 1));
                         Symbol s = symbolTable.hashTab[idx];
                         long word_bits = Double.doubleToRawLongBits(word);
                         long offset_bits = Double.doubleToRawLongBits(0xFFFF);
@@ -279,7 +287,7 @@ public class SymbolTable {
                             cur += 1;
                         }
                     } else {
-                        code2 = symbolTable.findLongestSymbol(cur, end);
+                        code2 = symbolTable.findLongestSymbol((byte) cur, (byte) end);
                         cur += symbolTable.symbols[code2].length();
                     }
 
