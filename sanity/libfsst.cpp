@@ -102,7 +102,7 @@ SymbolTable *buildSymbolTable(Counters& counters, vector<u8*> line, size_t len[]
             u8* start = cur;
             u16 code2 = 255, code1 = st->findLongestSymbol(cur, end);
             cur += st->symbols[code1].length();
-            gain += (int) (st->symbols[code1].length()-(1+isEscapeCode(code1)));
+            gain += (int) (st->symbols[code1].length()-(1+isEscapeCode(code1))); 
             while (true) {
                // count single symbol (i.e. an option is not extending it)
                counters.count1Inc(code1);

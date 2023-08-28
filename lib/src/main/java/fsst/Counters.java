@@ -58,6 +58,9 @@ public class Counters {
         return l != 0 ? true : false;
     }
 
+/** Advance pos1 to the next nonzero counter in register range.
+ * Read 16-bits single symbol counter, split into two 8-bits numbers (count1Low, count1High), while skipping over zeros
+*/
     int count1GetNext(int pos1, boolean noOpt) {
         if (noOpt) {
             return count1[pos1];
