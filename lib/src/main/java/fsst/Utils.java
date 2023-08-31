@@ -4,7 +4,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class Utils {
-    static int boolToInt(boolean value) {
+
+    static int booleanToInt(boolean value) {
         return value ? 1 : 0;
     }
 

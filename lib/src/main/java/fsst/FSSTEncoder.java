@@ -4,17 +4,42 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class FSSTEncoder {
-    static final long FSST_ENDIAN_MARKER = (long) 1;
-    static final long FSST_VERSION_20190218 = 20190218;
-    static final long FSST_VERSION = ((long) FSST_VERSION_20190218);
+    static final long FSST_ENDIAN_MARKER = 1L;
+    static final long FSST_VERSION_20190218 = 20190218L;
+    // static final long FSST_VERSION;
 
     SymbolTable symbolTable;
     Counters counters;
     int[] simdBuffer = new int[3 << 19];
 
+/** */
     FSSTEncoder() {
     }
 
+// TODO: Ask about string arrays instead of this char arrays.
+   /** Calibrate a FSST symbol table from a batch of strings (it is best to provide at least 16KB of data). */
+    FSSTEncoder(int n, int[] inputLength, char[] inputString, int zeroTerminated) {
+        int[] sampleBuffer = new int[(int) Symbol.FSST_SAMPLEMAXSZ];
+        int[] sampleLen = inputLength;
+        Object[] sample = makeSample(simdBuffer, sampleBuffer, sampleLen, n == 0 ? n : 1).toArray();
+        FSSTEncoder encoder = new FSSTEncoder();
+        SymbolTable symbolTable = new SymbolTable();
+        encoder.symbolTable = symbolTable.buildSymbolTable(encoder.counters, (Integer[]) sample, sampleLen,
+                zeroTerminated);
+        if (sampleLen != inputLength) {
+            // TODO: There might be a better way of doing the delete operator as the c++
+            // code is doing but this is my current closest guess
+            Arrays.fill(sampleLen, 0);
+        }
+        // TODO: There might be a better way of doing the delete operator as the c++
+        // code is doing but this is my current closest guess
+        Arrays.fill(sampleBuffer, 0);
+    }
+
+    /** Create another FSSTEncoder instance, necessary to do multi-threaded encoding using the same symbol table.
+     * 
+     * @param symbolTable table to duplicate.
+    */
     FSSTEncoder(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
     }
@@ -71,23 +96,7 @@ public class FSSTEncoder {
         return samples;
     }
 
-    FSSTEncoder(int n, int[] inputLength, char[] inputString, int zeroTerminated) {
-        int[] sampleBuffer = new int[(int) Symbol.FSST_SAMPLEMAXSZ];
-        int[] sampleLen = inputLength;
-        Object[] sample = makeSample(simdBuffer, sampleBuffer, sampleLen, n == 0 ? n : 1).toArray();
-        FSSTEncoder encoder = new FSSTEncoder();
-        SymbolTable symbolTable = new SymbolTable();
-        encoder.symbolTable = symbolTable.buildSymbolTable(encoder.counters, (Integer[]) sample, sampleLen,
-                zeroTerminated);
-        if (sampleLen != inputLength) {
-            // TODO: There might be a better way of doing the delete operator as the c++
-            // code is doing but this is my current closest guess
-            Arrays.fill(sampleLen, 0);
-        }
-        // TODO: There might be a better way of doing the delete operator as the c++
-        // code is doing but this is my current closest guess
-        Arrays.fill(sampleBuffer, 0);
-    }
+
 
     FSSTEncoder duplicate() {
         FSSTEncoder duplicate = new FSSTEncoder(this.symbolTable);

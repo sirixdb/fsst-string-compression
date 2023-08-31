@@ -129,7 +129,7 @@ struct QSymbol
 {
    Symbol symbol;
    mutable u32 gain; // mutable because gain value should be ignored in find() on unordered_set of QSymbols
-   bool operator==(const QSymbol &other) const { return symbol.val.num == other.symbol.val.num && symbol.length() == other.symbol.length(); }
+   bool operator==(const QSymbol &other) const{ return symbol.val.num == other.symbol.val.num && symbol.length() == other.symbol.length(); }
 };
 
 // we construct FSST symbol tables using a random sample of about 16KB (1<<14)

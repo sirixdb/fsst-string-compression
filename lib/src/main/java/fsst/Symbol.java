@@ -20,7 +20,7 @@ public class Symbol {
 
     static final int maxLength = 8;
     long value = 0;
-    long icl;
+    long icl; //ignoredBits:code:length
     int gcl;
     int gain;
     byte[] symbol = new byte[maxLength];
@@ -74,6 +74,15 @@ public class Symbol {
         assert (length() >= 2);
         return (int) (0xFFFF & this.value);
     }
+
+    Symbol concat(Symbol a, Symbol b) {
+        Symbol s;
+         length = a.length()+b.length();
+   if (length > Symbol::maxLength) length = Symbol::maxLength; 
+   s.set_code_len(FSST_CODE_MASK, length);
+   s.val.num = (b.val.num << (8*a.length())) | a.val.num;
+   return s;
+}
 
     static long FSST_HASH(long w) {
         return ((w * FSST_HASH_PRIME) ^ ((w * FSST_HASH_PRIME) >>> 13));
