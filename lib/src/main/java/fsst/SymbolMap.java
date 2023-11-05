@@ -66,7 +66,7 @@ public class SymbolMap {
     int load() {
         int ret = 0;
         for (int i = 0; i < hashTabSize; i++)
-            ret += Utils.boolToInt(hashTab[i].gcl < FSST_GCL_FREE);
+            ret += Utils.booleanToInt(hashTab[i].gcl < FSST_GCL_FREE);
         return ret;
     }
 

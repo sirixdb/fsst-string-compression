@@ -242,7 +242,7 @@ public class SymbolTable {
                 int start = cur;
                 int code2 = 255, code1 = symbolTable.findLongestSymbol((byte) cur, (byte) end);
                 cur += symbolTable.symbols[code1].length();
-                gain += (int) (symbolTable.symbols[code1].length() - (1 + Utils.boolToInt(isEscapeCode(code1))));
+                gain += (int) (symbolTable.symbols[code1].length() - (1 + Utils.booleanToInt(isEscapeCode(code1))));
                 while (true) {
                     // count single symbol (i.e. an option is not extending it)
                     // TODO: Double check which boolean flag we need for our specific implementation
@@ -293,7 +293,7 @@ public class SymbolTable {
                     }
 
                     // compute compressed output size
-                    gain += ((int) (cur - start)) - (1 + Utils.boolToInt(isEscapeCode(code2)));
+                    gain += ((int) (cur - start)) - (1 + Utils.booleanToInt(isEscapeCode(code2)));
 
                     // now count the subsequent two symbols we encode as an extension codesibility
                     if (sampleFrac < 128) { // no need to count pairs in final round
